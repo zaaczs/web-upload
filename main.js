@@ -10,7 +10,7 @@ const fields = [
   { key: "areaAtuacao", label: "Área de atuação" },
   { key: "estimativaVoto", label: "Estimativa de voto" },
   { key: "demanda", label: "Demanda" },
-  { key: "estrutura", label: "Estrutura" },
+  { key: "estrutura", label: "Estrutura (R$)" },
 ];
 
 const state = {
@@ -67,6 +67,7 @@ const btnCentralizarFoto = document.getElementById("btnCentralizarFoto");
 const editorCanvas = document.getElementById("editorCanvas");
 const editorZoom = document.getElementById("editorZoom");
 const editorCtx = editorCanvas.getContext("2d");
+const estruturaInput = document.getElementById("estrutura");
 let toastTimeoutId = null;
 
 setupEvents();
@@ -103,6 +104,8 @@ function setupEvents() {
   editorCanvas.addEventListener("pointerup", encerrarArrasteFoto);
   editorCanvas.addEventListener("pointercancel", encerrarArrasteFoto);
   editorCanvas.addEventListener("pointerleave", encerrarArrasteFoto);
+  estruturaInput.addEventListener("input", handleEstruturaInput);
+  estruturaInput.addEventListener("blur", handleEstruturaBlur);
 
   listaCadastros.addEventListener("click", handleAcoesGaleria);
 }
@@ -343,21 +346,22 @@ function atualizarPreviewFoto(src) {
 async function handleSalvarCadastro(event) {
   event.preventDefault();
   const payload = obterDadosFormulario();
+  const estruturaCents = parseCurrencyToCents(payload.estrutura);
 
   if (!payload.nome || !payload.telefone) {
     alert("Preencha pelo menos Nome e Telefone.");
     return;
   }
 
-  if (!Number.isInteger(Number(payload.estrutura)) || Number(payload.estrutura) < 0) {
-    alert("Estrutura deve ser um número inteiro maior ou igual a zero.");
+  if (!Number.isInteger(estruturaCents) || estruturaCents < 0) {
+    alert("Informe um valor monetário válido para Estrutura.");
     return;
   }
 
   const cadastro = {
     ...payload,
     foto: state.fotoBase64,
-    estrutura: Number(payload.estrutura),
+    estrutura: estruturaCents,
   };
 
   try {
@@ -388,6 +392,10 @@ function obterDadosFormulario() {
 function preencherFormulario(cadastro) {
   fields.forEach((item) => {
     const input = document.getElementById(item.key);
+    if (item.key === "estrutura") {
+      input.value = formatCurrencyFromCents(cadastro[item.key]);
+      return;
+    }
     input.value = cadastro[item.key] ?? "";
   });
   state.fotoBase64 = cadastro.foto || "";
@@ -446,7 +454,7 @@ function renderGaleria() {
         ${fields
           .map(
             (field) =>
-              `<div class="card-row"><strong>${field.label}:</strong> ${escapeHtml(cadastro[field.key] ?? "-")}</div>`
+              `<div class="card-row"><strong>${field.label}:</strong> ${escapeHtml(formatFieldValue(field, cadastro[field.key]))}</div>`
           )
           .join("")}
       </div>
@@ -526,7 +534,10 @@ function abrirModalVisualizacao(cadastro) {
     <div class="ficha-view">
       ${fotoHtml}
       ${fields
-        .map((field) => `<div class="ficha-line"><strong>${field.label}:</strong> ${escapeHtml(cadastro[field.key] ?? "-")}</div>`)
+        .map(
+          (field) =>
+            `<div class="ficha-line"><strong>${field.label}:</strong> ${escapeHtml(formatFieldValue(field, cadastro[field.key]))}</div>`
+        )
         .join("")}
     </div>
   `;
@@ -584,7 +595,7 @@ async function gerarPdf(cadastro) {
 
     fields.forEach((field) => {
       const label = field.label;
-      const text = String(cadastro[field.key] ?? "-");
+      const text = formatFieldValue(field, cadastro[field.key]);
       const wrapped = doc.splitTextToSize(text, 170);
       const blockHeight = Math.max(16, wrapped.length * 5 + 9);
 
@@ -681,4 +692,59 @@ function setSaveButtonLabel(isEditing) {
     <span>${isEditing ? "Atualizar" : "Salvar"}</span>
   `;
   initIcons();
+}
+
+function handleEstruturaInput() {
+  estruturaInput.value = estruturaInput.value.replace(/[^\d.,]/g, "");
+}
+
+function handleEstruturaBlur() {
+  const cents = parseCurrencyToCents(estruturaInput.value);
+  if (!Number.isFinite(cents) || cents < 0) return;
+  estruturaInput.value = formatCurrencyFromCents(cents);
+}
+
+function parseCurrencyToCents(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return NaN;
+  const clean = raw.replace(/\s/g, "").replace(/^R\$/i, "");
+
+  if (clean.includes(",")) {
+    const [inteiroRaw, decimalRaw = ""] = clean.split(",");
+    const inteiro = inteiroRaw.replace(/\D/g, "") || "0";
+    const decimal = decimalRaw.replace(/\D/g, "").slice(0, 2).padEnd(2, "0");
+    return Number(inteiro) * 100 + Number(decimal);
+  }
+
+  if (clean.includes(".")) {
+    const parts = clean.split(".");
+    const lastPartDigits = (parts[parts.length - 1] || "").replace(/\D/g, "");
+
+    if (parts.length === 2 && lastPartDigits.length > 0 && lastPartDigits.length <= 2) {
+      const inteiro = (parts[0] || "").replace(/\D/g, "") || "0";
+      const decimal = lastPartDigits.padEnd(2, "0");
+      return Number(inteiro) * 100 + Number(decimal);
+    }
+
+    const inteiro = clean.replace(/\D/g, "") || "0";
+    return Number(inteiro) * 100;
+  }
+
+  const inteiro = clean.replace(/\D/g, "");
+  if (!inteiro) return NaN;
+  return Number(inteiro) * 100;
+}
+
+function formatCurrencyFromCents(value) {
+  const cents = Number(value);
+  if (!Number.isFinite(cents)) return "-";
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+}
+
+function formatFieldValue(field, value) {
+  if (field.key === "estrutura") {
+    return formatCurrencyFromCents(value);
+  }
+  if (value === null || value === undefined || value === "") return "-";
+  return String(value);
 }

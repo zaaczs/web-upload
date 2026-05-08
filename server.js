@@ -31,6 +31,41 @@ const defaultUsers = [
   { username: "Jairo", password: "123456" },
 ];
 
+function parseCurrencyToCents(value) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.round(value) : NaN;
+  }
+
+  const raw = String(value || "").trim();
+  if (!raw) return NaN;
+  const clean = raw.replace(/\s/g, "").replace(/^R\$/i, "");
+
+  if (clean.includes(",")) {
+    const [inteiroRaw, decimalRaw = ""] = clean.split(",");
+    const inteiro = inteiroRaw.replace(/\D/g, "") || "0";
+    const decimal = decimalRaw.replace(/\D/g, "").slice(0, 2).padEnd(2, "0");
+    return Number(inteiro) * 100 + Number(decimal);
+  }
+
+  if (clean.includes(".")) {
+    const parts = clean.split(".");
+    const lastPartDigits = (parts[parts.length - 1] || "").replace(/\D/g, "");
+
+    if (parts.length === 2 && lastPartDigits.length > 0 && lastPartDigits.length <= 2) {
+      const inteiro = (parts[0] || "").replace(/\D/g, "") || "0";
+      const decimal = lastPartDigits.padEnd(2, "0");
+      return Number(inteiro) * 100 + Number(decimal);
+    }
+
+    const inteiro = clean.replace(/\D/g, "") || "0";
+    return Number(inteiro) * 100;
+  }
+
+  const inteiro = clean.replace(/\D/g, "");
+  if (!inteiro) return NaN;
+  return Number(inteiro) * 100;
+}
+
 async function initDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -149,14 +184,14 @@ app.get("/api/cadastros", authenticate, async (req, res) => {
 
 app.post("/api/cadastros", authenticate, async (req, res) => {
   const payload = req.body || {};
-  const estrutura = Number(payload.estrutura);
+  const estruturaCents = parseCurrencyToCents(payload.estrutura);
 
   if (!payload.nome || !payload.telefone) {
     return res.status(400).json({ message: "Nome e telefone sao obrigatorios." });
   }
 
-  if (!Number.isInteger(estrutura) || estrutura < 0) {
-    return res.status(400).json({ message: "Estrutura deve ser um numero inteiro maior ou igual a zero." });
+  if (!Number.isInteger(estruturaCents) || estruturaCents < 0) {
+    return res.status(400).json({ message: "Estrutura deve ser um valor monetario valido." });
   }
 
   const id = crypto.randomUUID();
@@ -180,7 +215,7 @@ app.post("/api/cadastros", authenticate, async (req, res) => {
         payload.areaAtuacao || "",
         payload.estimativaVoto || "",
         payload.demanda || "",
-        estrutura,
+        estruturaCents,
         payload.foto || "",
       ]
     );
@@ -194,14 +229,14 @@ app.post("/api/cadastros", authenticate, async (req, res) => {
 
 app.put("/api/cadastros/:id", authenticate, async (req, res) => {
   const payload = req.body || {};
-  const estrutura = Number(payload.estrutura);
+  const estruturaCents = parseCurrencyToCents(payload.estrutura);
 
   if (!payload.nome || !payload.telefone) {
     return res.status(400).json({ message: "Nome e telefone sao obrigatorios." });
   }
 
-  if (!Number.isInteger(estrutura) || estrutura < 0) {
-    return res.status(400).json({ message: "Estrutura deve ser um numero inteiro maior ou igual a zero." });
+  if (!Number.isInteger(estruturaCents) || estruturaCents < 0) {
+    return res.status(400).json({ message: "Estrutura deve ser um valor monetario valido." });
   }
 
   try {
@@ -230,7 +265,7 @@ app.put("/api/cadastros/:id", authenticate, async (req, res) => {
         payload.areaAtuacao || "",
         payload.estimativaVoto || "",
         payload.demanda || "",
-        estrutura,
+        estruturaCents,
         payload.foto || "",
         req.params.id,
         req.user.id,
