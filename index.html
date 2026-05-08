@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de Pessoas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-glow top"></div>
+    <div class="background-glow bottom"></div>
+
+    <main class="container app-shell">
+      <header class="header app-header">
+        <div>
+          <p class="kicker">Sistema de gestão</p>
+          <h1>Cadastro de Pessoas</h1>
+          <p class="subtitle">Interface moderna para cadastrar, editar e exportar fichas.</p>
+        </div>
+        <div class="tab-actions segmented">
+          <button id="btnNovoCadastro" class="btn btn-tab active" type="button">
+            <i data-lucide="user-plus"></i>
+            <span>Novo Cadastro</span>
+          </button>
+          <button id="btnGaleria" class="btn btn-tab" type="button">
+            <i data-lucide="layout-grid"></i>
+            <span>Galeria</span>
+          </button>
+        </div>
+      </header>
+
+      <section id="sectionFormulario" class="panel">
+        <form id="cadastroForm" class="form-card modern-form">
+          <div class="foto-wrapper upload-section">
+            <label for="fotoInput" id="fotoBox" class="foto-box">
+              <div id="fotoPlaceholder" class="foto-placeholder-content">
+                <i data-lucide="camera"></i>
+                <strong>Adicionar foto</strong>
+                <small>Toque para abrir câmera ou galeria</small>
+              </div>
+              <img id="fotoPreview" alt="Prévia da foto" />
+              <span class="foto-chip">
+                <i data-lucide="image-plus"></i>
+                <span>Alterar foto</span>
+              </span>
+            </label>
+            <input
+              id="fotoInput"
+              type="file"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+              capture="environment"
+            />
+          </div>
+
+          <section class="form-section">
+            <div class="section-title">
+              <i data-lucide="file-text"></i>
+              <h2>Dados da pessoa</h2>
+            </div>
+            <div class="grid-fields">
+              <label class="field">
+                <span>Nome</span>
+                <input id="nome" name="nome" type="text" required />
+              </label>
+              <label class="field">
+                <span>Telefone</span>
+                <input id="telefone" name="telefone" type="text" required />
+              </label>
+              <label class="field">
+                <span>Cidade</span>
+                <input id="cidade" name="cidade" type="text" required />
+              </label>
+              <label class="field">
+                <span>Bairro</span>
+                <input id="bairro" name="bairro" type="text" required />
+              </label>
+              <label class="field">
+                <span>Área de atuação</span>
+                <input id="areaAtuacao" name="areaAtuacao" type="text" required />
+              </label>
+              <label class="field">
+                <span>Estimativa de voto</span>
+                <input id="estimativaVoto" name="estimativaVoto" type="text" required />
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-title">
+              <i data-lucide="clipboard-list"></i>
+              <h2>Informações complementares</h2>
+            </div>
+            <div class="grid-fields">
+              <label class="field full">
+                <span>Demanda</span>
+                <textarea id="demanda" name="demanda" rows="3" required></textarea>
+              </label>
+              <label class="field field-compact">
+                <span>Estrutura</span>
+                <input
+                  id="estrutura"
+                  name="estrutura"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  placeholder="Ex.: 120"
+                  required
+                />
+              </label>
+            </div>
+          </section>
+
+          <div class="actions form-actions">
+            <button id="btnSalvar" class="btn btn-primary" type="submit">
+              <i data-lucide="save"></i>
+              <span>Salvar</span>
+            </button>
+            <button id="btnLimpar" class="btn btn-light" type="button">
+              <i data-lucide="eraser"></i>
+              <span>Limpar</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section id="sectionGaleria" class="panel hidden">
+        <div class="section-head">
+          <div class="section-title">
+            <i data-lucide="gallery-horizontal"></i>
+            <h2>Galeria</h2>
+          </div>
+          <span id="totalCadastros" class="badge">0 cadastros</span>
+        </div>
+        <div id="listaCadastros" class="cards-grid"></div>
+      </section>
+    </main>
+
+    <dialog id="modalVisualizacao" class="modal">
+      <article class="modal-content">
+        <header class="modal-header">
+          <h3>Visualizar cadastro</h3>
+          <button id="btnFecharModal" class="btn btn-icon" type="button" aria-label="Fechar">
+            <i data-lucide="x"></i>
+          </button>
+        </header>
+        <div id="modalFicha"></div>
+      </article>
+    </dialog>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.474.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
