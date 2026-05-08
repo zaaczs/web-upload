@@ -82,6 +82,44 @@ p {
   margin-bottom: 14px;
 }
 
+.login-panel {
+  max-width: 460px;
+  margin: 10px auto 0;
+}
+
+.login-header {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.login-form {
+  display: grid;
+  gap: 10px;
+}
+
+.login-form .btn {
+  margin-top: 4px;
+}
+
+.header-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.user-pill {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  background: #eff4ff;
+  color: #3352bf;
+  border: 1px solid #d1ddff;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .kicker {
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -559,6 +597,14 @@ h1 {
   .app-header {
     grid-template-columns: 1fr auto;
     align-items: center;
+  }
+
+  .header-actions {
+    justify-items: end;
+  }
+
+  .header-actions .btn-light {
+    width: fit-content;
   }
 
   h1 {

@@ -17,20 +17,50 @@
     <div class="background-glow bottom"></div>
 
     <main class="container app-shell">
+      <section id="sectionLogin" class="panel login-panel">
+        <div class="login-header">
+          <p class="kicker">Acesso</p>
+          <h2>Entrar no sistema</h2>
+          <p class="subtitle">Use seu usuário cadastrado para acessar seus próprios registros.</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <label class="field">
+            <span>Usuário</span>
+            <input id="loginUsuario" name="usuario" type="text" placeholder="Ex.: Iure" required />
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input id="loginSenha" name="senha" type="password" placeholder="******" required />
+          </label>
+          <button id="btnEntrar" class="btn btn-primary" type="submit">
+            <i data-lucide="log-in"></i>
+            <span>Entrar</span>
+          </button>
+        </form>
+      </section>
+
+      <section id="sectionApp" class="hidden">
       <header class="header app-header">
         <div>
           <p class="kicker">Sistema de gestão</p>
           <h1>Cadastro de Pessoas</h1>
           <p class="subtitle">Interface moderna para cadastrar, editar e exportar fichas.</p>
+          <p id="usuarioLogado" class="user-pill hidden"></p>
         </div>
-        <div class="tab-actions segmented">
-          <button id="btnNovoCadastro" class="btn btn-tab active" type="button">
-            <i data-lucide="user-plus"></i>
-            <span>Novo Cadastro</span>
-          </button>
-          <button id="btnGaleria" class="btn btn-tab" type="button">
-            <i data-lucide="layout-grid"></i>
-            <span>Galeria</span>
+        <div class="header-actions">
+          <div class="tab-actions segmented">
+            <button id="btnNovoCadastro" class="btn btn-tab active" type="button">
+              <i data-lucide="user-plus"></i>
+              <span>Novo Cadastro</span>
+            </button>
+            <button id="btnGaleria" class="btn btn-tab" type="button">
+              <i data-lucide="layout-grid"></i>
+              <span>Galeria</span>
+            </button>
+          </div>
+          <button id="btnSair" class="btn btn-light" type="button">
+            <i data-lucide="log-out"></i>
+            <span>Sair</span>
           </button>
         </div>
       </header>
@@ -140,6 +170,7 @@
         </div>
         <div id="listaCadastros" class="cards-grid"></div>
       </section>
+      </section>
     </main>
 
     <dialog id="modalVisualizacao" class="modal">
@@ -158,6 +189,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.474.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="app.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>
