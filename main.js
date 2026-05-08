@@ -617,7 +617,7 @@ async function gerarPdf(cadastro) {
       y += blockHeight + 3;
     });
 
-    doc.save(`cadastro-${(cadastro.nome || "pessoa").toLowerCase().replace(/\s+/g, "-")}.pdf`);
+    doc.save(buildPdfFileName(cadastro));
   } catch (error) {
     console.error(error);
     alert("Não foi possível gerar o PDF.");
@@ -692,6 +692,26 @@ function setSaveButtonLabel(isEditing) {
     <span>${isEditing ? "Atualizar" : "Salvar"}</span>
   `;
   initIcons();
+}
+
+function buildPdfFileName(cadastro) {
+  const slug = (cadastro.nome || "pessoa")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  const baseDate = new Date(cadastro.atualizadoEm || Date.now());
+  const yyyy = String(baseDate.getFullYear());
+  const mm = String(baseDate.getMonth() + 1).padStart(2, "0");
+  const dd = String(baseDate.getDate()).padStart(2, "0");
+  const hh = String(baseDate.getHours()).padStart(2, "0");
+  const mi = String(baseDate.getMinutes()).padStart(2, "0");
+  const ss = String(baseDate.getSeconds()).padStart(2, "0");
+  const unique = Date.now().toString().slice(-5);
+
+  return `cadastro-${slug || "pessoa"}-${yyyy}${mm}${dd}-${hh}${mi}${ss}-${unique}.pdf`;
 }
 
 function handleEstruturaInput() {
