@@ -184,6 +184,41 @@
       </article>
     </dialog>
 
+    <dialog id="modalFotoEditor" class="modal modal-editor">
+      <article class="modal-content">
+        <header class="modal-header">
+          <h3>Ajustar foto</h3>
+          <button id="btnFecharEditorFoto" class="btn btn-icon" type="button" aria-label="Fechar editor de foto">
+            <i data-lucide="x"></i>
+          </button>
+        </header>
+        <p class="subtitle">Arraste a imagem com o dedo e ajuste o zoom.</p>
+        <div class="editor-canvas-wrap">
+          <canvas id="editorCanvas" width="720" height="828"></canvas>
+        </div>
+        <div class="editor-controls">
+          <label class="field">
+            <span>Zoom</span>
+            <input id="editorZoom" type="range" min="1" max="3" step="0.01" value="1" />
+          </label>
+          <div class="actions">
+            <button id="btnCentralizarFoto" class="btn btn-light" type="button">
+              <i data-lucide="focus"></i>
+              <span>Centralizar</span>
+            </button>
+            <button id="btnCancelarEdicaoFoto" class="btn btn-light" type="button">
+              <i data-lucide="x-circle"></i>
+              <span>Cancelar</span>
+            </button>
+            <button id="btnAplicarEdicaoFoto" class="btn btn-primary" type="button">
+              <i data-lucide="check"></i>
+              <span>Usar foto</span>
+            </button>
+          </div>
+        </div>
+      </article>
+    </dialog>
+
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.474.0/dist/umd/lucide.min.js"></script>

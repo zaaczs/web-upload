@@ -1,4 +1,6 @@
 const AUTH_TOKEN_KEY = "authTokenCadastro";
+const PHOTO_EDITOR_WIDTH = 720;
+const PHOTO_EDITOR_HEIGHT = 828;
 
 const fields = [
   { key: "nome", label: "Nome" },
@@ -17,6 +19,18 @@ const state = {
   cadastros: [],
   editandoId: null,
   fotoBase64: "",
+  photoEditor: {
+    image: null,
+    fileType: "image/jpeg",
+    baseScale: 1,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    dragging: false,
+    pointerId: null,
+    lastPointerX: 0,
+    lastPointerY: 0,
+  },
 };
 
 const sectionLogin = document.getElementById("sectionLogin");
@@ -45,6 +59,14 @@ const modalVisualizacao = document.getElementById("modalVisualizacao");
 const modalFicha = document.getElementById("modalFicha");
 const btnFecharModal = document.getElementById("btnFecharModal");
 const toast = document.getElementById("toast");
+const modalFotoEditor = document.getElementById("modalFotoEditor");
+const btnFecharEditorFoto = document.getElementById("btnFecharEditorFoto");
+const btnCancelarEdicaoFoto = document.getElementById("btnCancelarEdicaoFoto");
+const btnAplicarEdicaoFoto = document.getElementById("btnAplicarEdicaoFoto");
+const btnCentralizarFoto = document.getElementById("btnCentralizarFoto");
+const editorCanvas = document.getElementById("editorCanvas");
+const editorZoom = document.getElementById("editorZoom");
+const editorCtx = editorCanvas.getContext("2d");
 let toastTimeoutId = null;
 
 setupEvents();
@@ -62,6 +84,25 @@ function setupEvents() {
   modalVisualizacao.addEventListener("click", (event) => {
     if (event.target === modalVisualizacao) modalVisualizacao.close();
   });
+  modalFotoEditor.addEventListener("click", (event) => {
+    if (event.target === modalFotoEditor) cancelarEdicaoFoto();
+  });
+  btnFecharEditorFoto.addEventListener("click", cancelarEdicaoFoto);
+  btnCancelarEdicaoFoto.addEventListener("click", cancelarEdicaoFoto);
+  btnAplicarEdicaoFoto.addEventListener("click", aplicarEdicaoFoto);
+  btnCentralizarFoto.addEventListener("click", () => {
+    resetPhotoEditorView();
+    drawPhotoEditor();
+  });
+  editorZoom.addEventListener("input", () => {
+    state.photoEditor.zoom = Number(editorZoom.value);
+    drawPhotoEditor();
+  });
+  editorCanvas.addEventListener("pointerdown", iniciarArrasteFoto);
+  editorCanvas.addEventListener("pointermove", moverFoto);
+  editorCanvas.addEventListener("pointerup", encerrarArrasteFoto);
+  editorCanvas.addEventListener("pointercancel", encerrarArrasteFoto);
+  editorCanvas.addEventListener("pointerleave", encerrarArrasteFoto);
 
   listaCadastros.addEventListener("click", handleAcoesGaleria);
 }
@@ -169,11 +210,119 @@ async function handleFotoChange(event) {
   const reader = new FileReader();
   reader.onload = () => {
     const base64 = String(reader.result || "");
-    state.fotoBase64 = base64;
-    atualizarPreviewFoto(base64);
-    showToast("Foto carregada com sucesso.");
+    abrirEditorFoto(base64, file.type || "image/jpeg");
   };
   reader.readAsDataURL(file);
+}
+
+function abrirEditorFoto(base64, fileType) {
+  const image = new Image();
+  image.onload = () => {
+    state.photoEditor.image = image;
+    state.photoEditor.fileType = fileType === "image/png" ? "image/png" : "image/jpeg";
+    state.photoEditor.baseScale = Math.max(PHOTO_EDITOR_WIDTH / image.width, PHOTO_EDITOR_HEIGHT / image.height);
+    resetPhotoEditorView();
+    drawPhotoEditor();
+    modalFotoEditor.showModal();
+    initIcons();
+  };
+  image.onerror = () => {
+    alert("Não foi possível carregar esta imagem.");
+    fotoInput.value = "";
+  };
+  image.src = base64;
+}
+
+function resetPhotoEditorView() {
+  state.photoEditor.zoom = 1;
+  state.photoEditor.offsetX = 0;
+  state.photoEditor.offsetY = 0;
+  editorZoom.value = "1";
+}
+
+function drawPhotoEditor() {
+  const editor = state.photoEditor;
+  const image = editor.image;
+  if (!image) return;
+
+  const canvasWidth = PHOTO_EDITOR_WIDTH;
+  const canvasHeight = PHOTO_EDITOR_HEIGHT;
+  const scale = editor.baseScale * editor.zoom;
+  const drawWidth = image.width * scale;
+  const drawHeight = image.height * scale;
+  const centerX = (canvasWidth - drawWidth) / 2;
+  const centerY = (canvasHeight - drawHeight) / 2;
+
+  let drawX = centerX + editor.offsetX;
+  let drawY = centerY + editor.offsetY;
+
+  if (drawWidth > canvasWidth) {
+    drawX = Math.min(0, Math.max(canvasWidth - drawWidth, drawX));
+  } else {
+    drawX = centerX;
+  }
+
+  if (drawHeight > canvasHeight) {
+    drawY = Math.min(0, Math.max(canvasHeight - drawHeight, drawY));
+  } else {
+    drawY = centerY;
+  }
+
+  editor.offsetX = drawX - centerX;
+  editor.offsetY = drawY - centerY;
+
+  editorCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+  editorCtx.fillStyle = "#eaf0ff";
+  editorCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+  editorCtx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+}
+
+function iniciarArrasteFoto(event) {
+  if (!state.photoEditor.image) return;
+  state.photoEditor.dragging = true;
+  state.photoEditor.pointerId = event.pointerId;
+  state.photoEditor.lastPointerX = event.clientX;
+  state.photoEditor.lastPointerY = event.clientY;
+  editorCanvas.setPointerCapture(event.pointerId);
+}
+
+function moverFoto(event) {
+  const editor = state.photoEditor;
+  if (!editor.dragging || editor.pointerId !== event.pointerId) return;
+
+  const deltaX = event.clientX - editor.lastPointerX;
+  const deltaY = event.clientY - editor.lastPointerY;
+  editor.lastPointerX = event.clientX;
+  editor.lastPointerY = event.clientY;
+  editor.offsetX += deltaX * (PHOTO_EDITOR_WIDTH / editorCanvas.clientWidth);
+  editor.offsetY += deltaY * (PHOTO_EDITOR_HEIGHT / editorCanvas.clientHeight);
+  drawPhotoEditor();
+}
+
+function encerrarArrasteFoto(event) {
+  const editor = state.photoEditor;
+  if (!editor.dragging || editor.pointerId !== event.pointerId) return;
+  editor.dragging = false;
+  editor.pointerId = null;
+  if (editorCanvas.hasPointerCapture(event.pointerId)) {
+    editorCanvas.releasePointerCapture(event.pointerId);
+  }
+}
+
+function cancelarEdicaoFoto() {
+  modalFotoEditor.close();
+  fotoInput.value = "";
+}
+
+function aplicarEdicaoFoto() {
+  const fileType = state.photoEditor.fileType || "image/jpeg";
+  const quality = fileType === "image/png" ? undefined : 0.92;
+  const base64 = editorCanvas.toDataURL(fileType, quality);
+  state.fotoBase64 = base64;
+  atualizarPreviewFoto(base64);
+  modalFotoEditor.close();
+  fotoInput.value = "";
+  showToast("Foto ajustada com sucesso.");
 }
 
 function atualizarPreviewFoto(src) {
