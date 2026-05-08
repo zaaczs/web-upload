@@ -9,14 +9,17 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 3000;
 const jwtSecret = process.env.JWT_SECRET || "dev-secret-change-in-production";
+const databaseUrl = process.env.DATABASE_URL;
 
-if (!process.env.DATABASE_URL) {
-  console.warn("DATABASE_URL nao definido. Configure para conectar no PostgreSQL.");
+if (!databaseUrl) {
+  throw new Error(
+    "DATABASE_URL nao definido. No Heroku, adicione o addon heroku-postgresql para preencher essa variavel."
+  );
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  connectionString: databaseUrl,
+  ssl: databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1") ? false : { rejectUnauthorized: false },
 });
 
 app.use(express.json({ limit: "10mb" }));
